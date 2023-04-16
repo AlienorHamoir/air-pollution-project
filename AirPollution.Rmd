@@ -1,0 +1,299 @@
+We choose Magadino and Bern as localities.
+
+Import libraries and define options
+
+# install.packages("rmarkdown")
+
+```{r}
+library(tidyverse)
+library(chron)
+```
+
+```{r}
+# source("functions_extra.R")
+```
+
+
+```{r}
+Sys.setlocale("LC_TIME","C")
+```
+
+```{r}
+options(stringsAsFactors=FALSE)
+options(chron.year.abb=FALSE)
+theme_set(theme_bw()) # preferences for plots
+```
+
+
+Start working with data
+
+```{r}
+filename1 <- file.path("Data", "MAG.csv")
+filename2 <- file.path("Data", "BER.csv")
+file.exists(filename1)
+file.exists(filename2)
+```
+
+
+```{r}
+MAG <- read.table(filename1,sep=";",skip=6,
+  col.names=c("datetime","O3","NO2","SO2","PM10","PM2.5", "EC", "NOX", "TEMP","PREC","RAD"))
+
+BER <- read.table(filename2,sep=";",skip=6,
+  col.names=c("datetime","O3","NO2","CO","PM10","PM2.5", "EC", "CPC", "NOX", "TEMP","PREC","RAD"))
+```
+
+```{r}
+head(MAG)
+```
+
+```{r}
+head(BER)
+```
+
+```{r}
+str(MAG)
+```
+```{r}
+str(BER)
+```
+
+```{r}
+MAG[,"datetime"] <- as.chron(MAG[,"datetime"], "%d.%m.%Y %H:%M") - 1/24
+MAG[,"month"] <- months(MAG[,"datetime"])
+MAG[,"date"] <- dates(MAG[,"datetime"])
+```
+
+```{r}
+BER[,"datetime"] <- as.chron(BER[,"datetime"], "%d.%m.%Y %H:%M") - 1/24
+BER[,"month"] <- months(BER[,"datetime"])
+BER[,"date"] <- dates(BER[,"datetime"])
+```
+
+Verifiy that there is no missing values or NaN:
+```{r}
+is.na(MAG)
+```
+
+```{r}
+is.na(BER)
+```
+All good, no NaN values to treat!
+
+
+```{r}
+head(MAG)
+```
+
+```{r}
+head(BER)
+```
+
+Check if there is no negative values, which would be unusable: 
+```{r}
+MAG[MAG < 0, ]
+```
+```{r}
+BER[BER < 0, ]
+```
+All good, only positive or null values!
+
+
+
+First plot of data
+For preliminary analysis, we will keep all variables and pollutants for each site.
+When we will procede to comparison between the two locations, Bern and Magadino, we will only keep the common pollutants and variables: O3, NO2, PM10, PM2.5, EC, NOX, TEMP, PREC, RAD.
+
+For Magadino: 
+View raw ozone concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, O3))+
+    scale_x_chron()
+```
+
+View raw nitrogen dioxide concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, NO2))+
+    scale_x_chron()
+```
+
+View raw sulfur dioxide concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, SO2))+
+    scale_x_chron()
+```
+
+View raw particule matters 10 concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, PM10))+
+    scale_x_chron()
+```
+
+View raw particule matters 2.5 concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, PM2.5))+
+    scale_x_chron()
+```
+
+View raw EC concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, EC))+
+    scale_x_chron()
+```
+
+View raw NOX concentrations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, NOX))+
+    scale_x_chron()
+```
+
+View raw temperatures:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, TEMP))+
+    scale_x_chron()
+```
+
+View raw precipîtations:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, PREC))+
+    scale_x_chron()
+```
+
+View raw global radiation:
+```{r}
+ggplot(MAG)+
+  geom_line(aes(datetime, RAD))+
+    scale_x_chron()
+```
+
+For Bern: 
+View raw ozone concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, O3))+
+    scale_x_chron()
+```
+
+View raw nitrogen dioxide concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, NO2))+
+    scale_x_chron()
+```
+
+View raw particule matters 10 concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, PM10))+
+    scale_x_chron()
+```
+
+View raw particule matters 2.5 concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, PM2.5))+
+    scale_x_chron()
+```
+
+View raw EC concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, EC))+
+    scale_x_chron()
+```
+
+View raw NOX concentrations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, NOX))+
+    scale_x_chron()
+```
+
+View raw temperatures:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, TEMP))+
+    scale_x_chron()
+```
+
+View raw precipitations:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, PREC))+
+    scale_x_chron()
+```
+
+View raw global radiation:
+```{r}
+ggplot(BER)+
+  geom_line(aes(datetime, RAD))+
+    scale_x_chron()
+```
+
+
+Create dataframes for comparison, only keeping the common colums. Copy dataframes and delete the desired columns:
+```{r}
+MAG1 <- MAG 
+BER1 <- BER 
+
+MAG1[ ,c('SO2')] <- list(NULL)
+BER1[ ,c('CO', 'CPC')] <- list(NULL)
+```
+```{r}
+head(MAG1)
+```
+```{r}
+head(BER1)
+```
+
+Comparison of pollutants in two localities:
+```{r}
+lf_MAG <- gather(MAG, variable, value, -c(datetime, month, date))
+```
+
+```{r}
+ggplot(lf_MAG) +
+  facet_grid(variable~., scale="free_y") +  
+  geom_line(aes(datetime, value))+
+  scale_x_chron()
+```
+
+```{r}
+ggplot(lf_MAG, aes(month, value)) +
+  facet_grid(variable~., scale="free_y") +
+  geom_bar(stat="summary", fun="mean") +
+  geom_errorbar(stat="summary",
+                fun.min=min, #function(x) quantile(x, .25),
+                fun.max=max, #function(x) quantile(x, .75))+
+                width=0.1)
+```
+
+```{r}
+lf_BER <- gather(BER, variable, value, -c(datetime, month, date))
+```
+
+```{r}
+ggplot(lf_BER) +
+  facet_grid(variable~., scale="free_y") +  
+  geom_line(aes(datetime, value))+
+  scale_x_chron()
+```
+
+```{r}
+ggplot(lf_BER, aes(month, value)) +
+  facet_grid(variable~., scale="free_y") +
+  geom_bar(stat="summary", fun="mean") +
+  geom_errorbar(stat="summary",
+                fun.min=min, #function(x) quantile(x, .25),
+                fun.max=max, #function(x) quantile(x, .75))+
+                width=0.1)
+```
