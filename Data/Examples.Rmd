@@ -1,0 +1,98 @@
+Aggregation by conventional looping: ozone
+
+Monthly mean
+Solve by looping. Note that we “grow” a data frame by the function rbind.
+
+```{r}
+unique.months <- levels(data[,"month"])
+
+O3.monthly <- NULL
+for(.month in unique.months) {
+  table <- filter(data, month == .month)
+  tmp <- data.frame(month=.month, O3=mean(table[,"O3"], na.rm=TRUE))
+  O3.monthly <- rbind(O3.monthly, tmp)
+}
+
+print(O3.monthly)
+```
+```{r}
+class(O3.monthly[,"month"])
+```
+```{r}
+O3.monthly[,"month"] <- factor(O3.monthly[,"month"], unique.months)
+class(O3.monthly[,"month"])
+```
+
+```{r}
+ggplot(O3.monthly) +
+  geom_col(aes(month, O3)) +
+  scale_y_continuous(expand=expansion(mult=c(0, 0.1)))
+```
+
+Daily maximum
+```{r}
+unique.dates <- unique(data[,"date"])
+O3.dailymax <- NULL
+for(.date in unique.dates) {
+  table <- data %>% filter(date == .date)
+  tmp <- data.frame(date=.date, O3=max(table[,"O3"], na.rm=TRUE))
+  O3.dailymax <- rbind(O3.dailymax, tmp)
+}
+
+head(O3.dailymax)
+```
+
+```{r}
+O3.dailymax[,"date"] <- as.chron(O3.dailymax[,"date"])
+class(O3.dailymax[,"date"])
+
+head(O3.dailymax)
+```
+```{r}
+tail(O3.dailymax)
+```
+```{r}
+ggplot(O3.dailymax) +
+  geom_line(aes(O3),stat="ecdf") +
+  labs(y = "ECDF")
+```
+
+Aggregation with functions
+
+```{r}
+data %>%
+  group_by(month) %>%
+  summarize(O3 = mean(O3, na.rm=TRUE),
+            NO2 = mean(NO2, na.rm=TRUE))
+```
+
+```{r}
+lf <- gather(data, variable, value, -c(datetime, month, date))
+```
+
+```{r}
+ggplot(lf) +
+  facet_grid(variable~., scale="free_y") +  
+  geom_line(aes(datetime, value))+
+  scale_x_chron()
+```
+```{r}
+result <- lf %>%
+  group_by(month, variable) %>%
+  summarize(value = mean(value, na.rm=TRUE))
+```
+
+```{r}
+ggplot(lf, aes(month, value)) +
+  facet_grid(variable~., scale="free_y") +
+  geom_bar(stat="summary", fun="mean") +
+  geom_errorbar(stat="summary",
+                fun.min=min, #function(x) quantile(x, .25),
+                fun.max=max, #function(x) quantile(x, .75))+
+                width=0.1)
+```
+
+
+
+
+
